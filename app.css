@@ -1,0 +1,14 @@
+.Polaris-DataTable__TableRow.Polaris-DataTable__TableRow--header {
+    background-color: #f0f0f0;
+    font-weight: bold;
+    /* Add any other styles you want to apply */
+  }
+  
+  /* Apply styles to header cells */
+  .Polaris-DataTable__Cell.Polaris-DataTable__Cell--header {
+    font-size: medium;
+    text-transform: uppercase;
+    font-weight: 500;
+    /* color: #0070f3; */
+    /* Add any other styles you want to apply to header cells */
+  }
