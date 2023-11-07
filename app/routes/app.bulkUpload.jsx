@@ -39,26 +39,6 @@ export const loader = async () => {
 }
 
 export const action = async ({ request }) => {
-    let filedata = await request.formData()
-    if(request.method==='PUT'){
-        let filter=filedata.get('filter')
-        switch (filter) {
-            case "Search":
-                
-                
-                break;
-            case "Sort":
-
-                
-                break;
-        
-            default:
-                break;
-        }
-    }else{
-
-    
-
 
     let filedata = await request.formData()
     let filess = filedata.get('csvFile')
@@ -79,9 +59,9 @@ export const action = async ({ request }) => {
         res = await res.json()
         console.log('res', res)
         const filepath = path.join(cspload, res.filedata)
-        // const filedat = new FormData()
-        const myObject = [];
 
+        // Read Csv file and covert into json 
+        const myObject = [];
         if (res) {
             console.log('sdh')
             let jsonArray = await csvtojson().fromFile(filepath)
@@ -95,29 +75,22 @@ export const action = async ({ request }) => {
         console.log('js', myObject)
         let jsonLdata = myObject.map(obj => JSON.stringify(obj)).join('\n')
 
-        let jsonlFileName = 'data.jsonl'
-        fs.writeFileSync(jsonlFileName, jsonLdata, 'utf-8')
         const JsonLfile = new FormData()
         
-
         const blob = new Blob([jsonLdata], { type: 'application/jsonl' })
         const jsFile = new File([blob], "myjsonn.jsonl", { type: 'application/jsonl' })
         
-        // console.log('dt', JsonLfile)
-        // console.log('files', filess)
         try {
 
             // step 1 initiat bulk upload
             let api_1 = await Bulkstageupload()
             console.log('step 1', api_1)
-            if (api_1.data.stagedUploadsCreate.stagedTargets) {
+            if (api_1.data?.stagedUploadsCreate?.stagedTargets) {
                 let stageddata = api_1.data.stagedUploadsCreate.stagedTargets[0].parameters
                 stageddata.map((data) => {
                     JsonLfile.append(data.name, data.value)
                 })
                 JsonLfile.append('file', jsFile)
-                // console.log('formdata ', JsonLfile)
-                // return null
                 try {
                     //  step 2 file upload
                     let api_2 = await BulkDataupload(JsonLfile)
@@ -132,11 +105,11 @@ export const action = async ({ request }) => {
 
                         if (key) {
                             try {
-                                //  step 3 BulkOperationRunMutation 
+                                //  step 3 Run BulkOperationRunMutation 
                                 let step3 = await BulkOperationRunMutation(key)
                                 console.log('step3', step3)
 
-                                if (step3.data.bulkOperationRunMutation.bulkOperation) {
+                                if (step3?.data?.bulkOperationRunMutation?.bulkOperation) {
                                     return json({ data: step3, status: true })
                                     
                                 } else {
@@ -166,7 +139,7 @@ export const action = async ({ request }) => {
         }
     }
     // return null
-}
+
 }
 
 
@@ -195,21 +168,19 @@ const BulkUpload = () => {
         <Page title='Bulk Upload'>
             <Frame>
                 <Card>
-                    <Text>Bulk Upload for Product</Text>
+                    <Text>Bulk Import for Product</Text>
                     
                     <Form encType='multipart/form-data' method='post'>
                         <div >
-                         <input type='file' name='csvFile'  style={{padding:"60px 120px",border:"1px dashed gray",cursor:"pointer" }} />
-                         <br />
-                        </div>
+                         <input type='file' name='csvFile'  style={{padding:"60px 120px",border:"1px dashed gray",cursor:"pointer", }} />
+                         
+                        </div><br />
                         {/* <p>upload ".csv " file only</p> */}
                         <Button submit primarySuccess onClick={() => setLoader(true)}>
                             {loader ? <Spinner size='small' /> : "Upload"}
                         </Button>
                     </Form>
-                    <br />
-                    {/* <Button submit>Upload File</Button> */}
-                    {/* <Button onClick={handleUplaod}>Upload File</Button> */}
+                    <br />                    
                     {errmsg ? <p style={{ color: "red" }}>{action_data.error}</p> : null}
                 </Card>
                 {msg ? <Toast onDismiss={() => setMsg(false)} content={'Bulk Operation initiated... '} duration={4000}></Toast> : null}
