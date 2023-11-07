@@ -92,7 +92,7 @@ export const action = async ({ request }) => {
                 })
                 JsonLfile.append('file', jsFile)
                 try {
-                    //  step 2 file upload
+                    //  step 2 file upload 
                     let api_2 = await BulkDataupload(JsonLfile)
                     console.log('api_2 ', api_2)
 

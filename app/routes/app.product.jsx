@@ -15,21 +15,13 @@ export const links = () => {
 export const loader = async ({ request }) => {
 
   if (request.method === "GET") {
-    let re = await Product.find()
-    return json(re)
-
-    console.log('dfkjvhjk', request.method)
-    return json({ data: 'test', status: true })
+    let result = await Product.find()
+    return json(result)
   } else {
-
+    return null
   }
-  // let data = await fetch("http://localhost:5000/temp",{method:'post'})
-  // data=await data.json()
-
-
-
-
 }
+
 export const action = async ({ request }) => {
 
   const bodydata = await request.formData()
@@ -38,6 +30,7 @@ export const action = async ({ request }) => {
   let id = bodydata.get('id')
   switch (request.method) {
     case "PUT":
+      // Add Static product data
       console.log('Post id', bodydata.get('id'))
       try {
         const data = new Product({ title: 'a1' })
@@ -50,6 +43,7 @@ export const action = async ({ request }) => {
       }
       break;
     case "DELETE":
+      // Delete Product from database
       console.log('Delete id', id)
       try {
         let result = await Product.deleteOne({ _id: id })
@@ -61,6 +55,7 @@ export const action = async ({ request }) => {
       }
       break;
     case "POST":
+      // filter Product Data
       if (request.method === 'PUT') {
         let filter = filedata.get('filter')
         switch (filter) {
@@ -80,16 +75,14 @@ export const action = async ({ request }) => {
             }
             break;
           case "Sort":
-
-
             break;
-
           default:
             break;
         }
       }
       break;
     default:
+      return null
       break;
   }
 }
@@ -106,7 +99,11 @@ export default function () {
   const [errmsg, seterrMsg] = useState(false)
   const [loader, setLoader] = useState(false)
   const [deleteid, setDeleteid] = useState('')
+  const [currentPage, setCurrentPage] = useState(1);
+
   // console.log('lpoasder',loaderData)
+
+  // Covert Product data into row Formate (Polaris Datatable)
   const row = loaderData.map((data) => [
     // const [row, setRow] = useState(loaderData.map((data) => [
     data.productId,
@@ -121,10 +118,11 @@ export default function () {
     </div>
 
   ])
+  const colums = ['Id', "Title", "vendor", "Type", "Actions"]
 
 
-  const [currentPage, setCurrentPage] = useState(1);
-
+  
+// Handle Pagination Change 
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);
   };
@@ -138,18 +136,13 @@ export default function () {
 
   // console.log('r',row)
 
-
+// Handle Product Delete Operation 
   const handleDelete = () => {
-
     submit({ id: deleteid }, { method: "DELETE" })
     setLoader(true)
   }
 
 
-
-
-
-  const colums = ['Id', "Title", "vendor", "Type", "Actions"]
   useEffect(() => {
     if (action_data) {
       setLoader(false); seActive(false);
@@ -188,11 +181,11 @@ export default function () {
             />
 
           </Card>
-
+          {/* Toaster for success & error message */}
           {msg ? <Toast onDismiss={() => setMsg(false)} content={'Product Deleted... '} duration={4000}></Toast> : null}
           {errmsg ? <Toast onDismiss={() => seterrMsg(false)} content={'Somthing went wrong  '} duration={6000} error></Toast> : null}
 
-
+        {/* Delete Confirmation Modal */}
           <Modal
             open={active}
             onClose={() => seActive(false)}
