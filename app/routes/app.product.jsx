@@ -1,5 +1,5 @@
 import {
-  Button, Card, DataTable, Frame, Page, Toast, Spinner, Modal, Text, Pagination, TextField
+  Button, Card, DataTable, Frame, Badge, Page, Toast, Spinner, Modal, Text, Pagination, TextField, IndexTable, useIndexResourceState
 } from "@shopify/polaris";
 import { json } from '@remix-run/node'
 import { useActionData, useLoaderData, useNavigate, useSubmit } from "@remix-run/react";
@@ -56,35 +56,40 @@ export const action = async ({ request }) => {
       break;
     case "POST":
       // filter Product Data
-      if (request.method === 'PUT') {
-        let filter = filedata.get('filter')
-        switch (filter) {
-          case "Search":
-            let key = bodydata.get('key')
-            try {
-              let result = await Product.find({
-                "$or":
-                  [
-                    { title: { $regex: key, $options: "i" } },]
-              })
-              console.log('result', result)
-              return json({ data: result, status: true })
-            } catch (error) {
-              console.log('result', error)
-              return json({ error: "Something went Wrong", status: false })
-            }
-            break;
-          case "Sort":
-            break;
-          default:
-            break;
-        }
+      let filter = bodydata.get('filter')
+      console.log('filter...', filter)
+      switch (filter) {
+        case "Search":
+          let key = bodydata.get('key')
+          try {
+            let result = await Product.find({
+              "$or":
+                [
+                  { title: { $regex: key, $options: "i" } },]
+            }, [])
+            console.log('result', result)
+            return json({ data: result, status: true, flage: true })
+          } catch (error) {
+            console.log('result', error)
+            return json({ error: "Something went Wrong", status: false })
+          }
+          break;
+        case "Sort":
+          break;
+        default:
+          break;
       }
+
       break;
     default:
       return null
       break;
   }
+}
+
+export const shouldRevalidate = () => {
+  console.log('aaaaaaaaaa')
+  return false
 }
 
 
@@ -100,7 +105,8 @@ export default function () {
   const [loader, setLoader] = useState(false)
   const [deleteid, setDeleteid] = useState('')
   const [currentPage, setCurrentPage] = useState(1);
-
+  const [keyStatust, setKeyStatust] = useState('')
+  const [products, setProducts] = useState(loaderData)
   // console.log('lpoasder',loaderData)
 
   // Covert Product data into row Formate (Polaris Datatable)
@@ -121,71 +127,164 @@ export default function () {
   const colums = ['Id', "Title", "vendor", "Type", "Actions"]
 
 
-  
-// Handle Pagination Change 
+
+  // Handle Pagination Change 
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);
   };
 
   const startIndex = (currentPage - 1) * 5;
   const endIndex = startIndex + 5;
-  const paginatedData = row.slice(startIndex, endIndex);
+  const paginatedData = products.slice(startIndex, endIndex);
 
 
   console.warn('Action loaded', loaderData)
 
   // console.log('r',row)
 
-// Handle Product Delete Operation 
+  // Handle Product Delete Operation 
   const handleDelete = () => {
     submit({ id: deleteid }, { method: "DELETE" })
     setLoader(true)
   }
 
-
-  useEffect(() => {
+useEffect(() => {
     if (action_data) {
       setLoader(false); seActive(false);
-      action_data.status ? (setMsg(true)) : seterrMsg(true)
-      console.log('first', action_data)
+      if (!action_data?.flage) {
+        action_data.status ? (setMsg(true)) : seterrMsg(true)
+        console.log('first', action_data)
+
+      } else {
+        console.warn('filterrrrrrrrrrrrr', action_data)
+        setProducts(action_data?.data)
+      }
+
     }
 
-  }, [action_data, loaderData])
+  }, [action_data])
 
+  console.log('loader..', loaderData)
 
+  const resourceName = {
+    singular: 'Product',
+    plural: 'Products',
+  };
+
+  // const { selectedResources, allResourcesSelected, handleSelectionChange } =useIndexResourceState(products)
+
+  const handlesearch = (key) => {
+
+    if (key !== '') {
+      submit({ key: key, filter: 'Search' }, { method: 'POST' })
+    }
+    else {
+      console.log('empty', loaderData)
+      setProducts(loaderData)
+    }
+  }
+  const sortt=['false','true','true','false','false']
   return (
-    <div>
+    <div> 
       <Page title="Products">
         <Frame>
-          {/* <Button pressed onClick={() => { submit({ id: '12' }, { method: "PUT" }) }}>{loader ? <Spinner size="small" /> : "+ Add"} </Button> */}
+          <Button pressed onClick={() => { submit({ id: '12' }, { method: "PUT" }) }}>{loader ? <Spinner size="small" /> : "+ Add"} </Button>
           {/* < Button onClick={sortdata}>Test</Button> */}
+          <div style={{ border: '1px solid gray', padding: "0px", borderRadius: '8px' }}>
+            <input
+              className="Polaris-TextField__Input"
+              // label="Search"
+              placeholder="Search..."
+              type="text"
+              autoComplete="off"
+              onChange={(value) => handlesearch(value.target.value)}
+            />
 
-          {/* <input type="text" placeholder="Search..." onChange={() => submit({ id: '11' }, { method: "POST" })}></input> */}
+          </div>
 
+
+          {/* <input type="text" placeholder="" onChange={() => submit({ id: '11' }, { method: "POST" })}></input> */}
 
           <Card>
+            <Pagination
+              hasNext={currentPage * 5 < products.length}
+              hasPrevious={currentPage > 1}
+              onPrevious={() => handlePageChange(currentPage - 1)}
+              onNext={() => handlePageChange(currentPage + 1)}
+              type="table"
+              label={`Page ${currentPage} of ${Math.ceil(products.length / 5)} `}
+            />
+            <IndexTable
+              resourceName={resourceName}
+              itemCount={products.length}
+              selectable={false}
+              // sortable={sortt}
+
+              //   selectedItemsCount={
+              //     allResourcesSelected ? 'All' : selectedResources.length
+              //   }
+              //   onSelectionChange={handleSelectionChange}
+              headings={[
+                { title: 'ProductID' },
+                { title: 'Title' },
+                { title: 'Vendor' },
+                { title: 'Type' },
+                { title: 'Action', alignment: "center" },
+              ]}
+            >
+              {paginatedData.map(
+                (
+                  { _id, title, vendor, product_type, productId },
+                  index,
+                ) => (
+                  <IndexTable.Row
+                    id={_id}
+                    key={_id}
+                    // selected={selectedResources.includes(id)}
+                    position={index}
+                  >
+                    <IndexTable.Cell>
+                      <Text variant="bodyMd" fontWeight="bold" as="span">
+                        {productId}
+                      </Text>
+                    </IndexTable.Cell>
+                    <IndexTable.Cell>{title}</IndexTable.Cell>
+                    <IndexTable.Cell>{vendor}</IndexTable.Cell>
+                    <IndexTable.Cell>{product_type}</IndexTable.Cell>
+                    <IndexTable.Cell>
+                      <div>
+                        <Button pressed onClick={() => Navigate(`/app/updateProduct/${_id}`)}>Update</Button>&nbsp;
+                        <Button destructive onClick={() => { seActive(true), setDeleteid(_id) }}>
+                          Delete
+                        </Button>
+                      </div>
+                    </IndexTable.Cell>
+                  </IndexTable.Row>
+                ),
+              )
+                // :
+                // <IndexTable.Row>
+                //   <IndexTable.Cell>
+                //     No Product Found
+                //   </IndexTable.Cell>
+                // </IndexTable.Row>
+              }
+            </IndexTable>
+          </Card>
+          
+          {/* <Card>
             <DataTable
               headings={colums.map((col) => col)}
               rows={paginatedData}
               columnContentTypes={['text', 'numeric', 'numeric', 'numeric', 'numeric',]}
             />
+          </Card> */}
 
-
-            <Pagination
-              hasNext={currentPage * 5 < row.length}
-              hasPrevious={currentPage > 1}
-              onPrevious={() => handlePageChange(currentPage - 1)}
-              onNext={() => handlePageChange(currentPage + 1)}
-              type="table"
-              label={`Page ${currentPage} of ${Math.floor(row.length / 5)} `}
-            />
-
-          </Card>
           {/* Toaster for success & error message */}
           {msg ? <Toast onDismiss={() => setMsg(false)} content={'Product Deleted... '} duration={4000}></Toast> : null}
           {errmsg ? <Toast onDismiss={() => seterrMsg(false)} content={'Somthing went wrong  '} duration={6000} error></Toast> : null}
 
-        {/* Delete Confirmation Modal */}
+          {/* Delete Confirmation Modal */}
           <Modal
             open={active}
             onClose={() => seActive(false)}

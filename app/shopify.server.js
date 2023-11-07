@@ -47,6 +47,8 @@ const shopify = shopifyApp({
     : {}),
 });
 
+// console.log('shopify...',shopify)
+
 export default shopify;
 export const apiVersion = LATEST_API_VERSION;
 export const addDocumentResponseHeaders = shopify.addDocumentResponseHeaders;

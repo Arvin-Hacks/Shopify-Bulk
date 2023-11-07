@@ -2,19 +2,19 @@
 
 name = "Bulkk-Import"
 client_id = "e8713189b5202bee92713ccf9fdf30a7"
-application_url = "https://alignment-kits-dynamics-survive.trycloudflare.com"
+application_url = "https://tested-costumes-mark-bass.trycloudflare.com"
 embedded = true
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "write_products"
+scopes = "write_products,read_customers,read_metaobjects"
 
 [auth]
 redirect_urls = [
-  "https://alignment-kits-dynamics-survive.trycloudflare.com/auth/callback",
-  "https://alignment-kits-dynamics-survive.trycloudflare.com/auth/shopify/callback",
-  "https://alignment-kits-dynamics-survive.trycloudflare.com/api/auth/callback",
-  "https://alignment-kits-dynamics-survive.trycloudflare.com/.shopify/graphiql/auth/callback"
+  "https://tested-costumes-mark-bass.trycloudflare.com/auth/callback",
+  "https://tested-costumes-mark-bass.trycloudflare.com/auth/shopify/callback",
+  "https://tested-costumes-mark-bass.trycloudflare.com/api/auth/callback",
+  "https://tested-costumes-mark-bass.trycloudflare.com/.shopify/graphiql/auth/callback"
 ]
 
 [webhooks]

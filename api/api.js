@@ -194,6 +194,14 @@ export const ProductGenerateWebhook = async (cb_url) => {
 
 }
 
-export const serchProduct=(key)=>{
+export const serchProduct=(filter,key)=>{
 
+  switch (filter) {
+    case "Search":
+      
+      break;
+  
+    default:
+      break;
+  }
 }
