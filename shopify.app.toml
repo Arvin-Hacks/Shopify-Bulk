@@ -2,7 +2,7 @@
 
 name = "bulk-upload"
 client_id = "66ed47b800f77d9acaabf8aa937b2c3e"
-application_url = "https://eaa4-49-36-80-71.ngrok-free.app"
+application_url = "https://d552-49-36-80-71.ngrok-free.app"
 embedded = true
 
 [access_scopes]
@@ -11,10 +11,10 @@ scopes = "write_products"
 
 [auth]
 redirect_urls = [
-  "https://eaa4-49-36-80-71.ngrok-free.app/auth/callback",
-  "https://eaa4-49-36-80-71.ngrok-free.app/auth/shopify/callback",
-  "https://eaa4-49-36-80-71.ngrok-free.app/api/auth/callback",
-  "https://eaa4-49-36-80-71.ngrok-free.app/.shopify/graphiql/auth/callback"
+  "https://d552-49-36-80-71.ngrok-free.app/auth/callback",
+  "https://d552-49-36-80-71.ngrok-free.app/auth/shopify/callback",
+  "https://d552-49-36-80-71.ngrok-free.app/api/auth/callback",
+  "https://d552-49-36-80-71.ngrok-free.app/.shopify/graphiql/auth/callback"
 ]
 
 [webhooks]

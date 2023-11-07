@@ -77,8 +77,8 @@ const UpdateProduct = () => {
     const [productdata, setProductdat] = useState({
         id: product._id,
         title: product.title,
-        vendor: product.vendor,
-        product_type: product.product_type,
+        vendor: product.vendor? product.vendor : '' ,
+        product_type: product.product_type? product.product_type:'',
     })
 
     const updateproduct = () => {
@@ -98,7 +98,7 @@ const UpdateProduct = () => {
             setLoader(false)
             console.log('useffect response', action_response)
             action_response.status ?
-                (setMsg(true), setTimeout(() => { Navigate('/app/product'), 3200 }))
+                (setMsg(true), setTimeout(() => { Navigate('/app/product'), 4000 }))
                 : seterrMsg(true)
             // Navigate('/app')
             // setTimeout(() => { console.warn('masg state', msg) }, 5000)
@@ -148,5 +148,9 @@ const UpdateProduct = () => {
         </Page>
     )
 }
+
+
+
+    
 
 export default UpdateProduct

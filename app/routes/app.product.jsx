@@ -1,9 +1,13 @@
-import { Button, Card, DataTable, Frame, Page, Toast, Spinner, Modal, Text, TextField } from "@shopify/polaris";
+import {
+  Button, Card, DataTable, Frame, Page, Toast, Spinner, Modal, Text, Pagination, TextField
+} from "@shopify/polaris";
 import { json } from '@remix-run/node'
 import { useActionData, useLoaderData, useNavigate, useSubmit } from "@remix-run/react";
+import ReactPaginate from 'react-paginate'
 import React, { useEffect, useState } from 'react'
 const { Product } = require('../db.server')
 import Appcss from '../../app.css'
+
 export const links = () => {
   [{ rel: "stylesheet", href: Appcss }]
 }
@@ -13,7 +17,6 @@ export const loader = async ({ request }) => {
   if (request.method === "GET") {
     let re = await Product.find()
     return json(re)
-
 
     console.log('dfkjvhjk', request.method)
     return json({ data: 'test', status: true })
@@ -58,20 +61,33 @@ export const action = async ({ request }) => {
       }
       break;
     case "POST":
-      let key = bodydata.get('key')
-      try {
-        let result = await Product.find({
-          "$or":
-            [
-              { title: { $regex: key, $options: "i" } },]
-        })
-        console.log('result', result)
-        return json({ data: result, status: true })
-      } catch (error) {
-        console.log('result', error)
-        return json({ error: "Something went Wrong", status: false })
-      }
+      if (request.method === 'PUT') {
+        let filter = filedata.get('filter')
+        switch (filter) {
+          case "Search":
+            let key = bodydata.get('key')
+            try {
+              let result = await Product.find({
+                "$or":
+                  [
+                    { title: { $regex: key, $options: "i" } },]
+              })
+              console.log('result', result)
+              return json({ data: result, status: true })
+            } catch (error) {
+              console.log('result', error)
+              return json({ error: "Something went Wrong", status: false })
+            }
+            break;
+          case "Sort":
 
+
+            break;
+
+          default:
+            break;
+        }
+      }
       break;
     default:
       break;
@@ -91,9 +107,8 @@ export default function () {
   const [loader, setLoader] = useState(false)
   const [deleteid, setDeleteid] = useState('')
   // console.log('lpoasder',loaderData)
-
-  console.warn('Action loaded', loaderData)
-  const [row, setRow] = useState(loaderData.map((data) => [
+  const row = loaderData.map((data) => [
+    // const [row, setRow] = useState(loaderData.map((data) => [
     data.productId,
     data.title,
     data.vendor,
@@ -105,17 +120,34 @@ export default function () {
       </Button>
     </div>
 
-  ]))
+  ])
+
+
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+  };
+
+  const startIndex = (currentPage - 1) * 5;
+  const endIndex = startIndex + 5;
+  const paginatedData = row.slice(startIndex, endIndex);
+
+
+  console.warn('Action loaded', loaderData)
+
   // console.log('r',row)
 
 
   const handleDelete = () => {
 
-    // submit({ id: data._id }, { method: "PUT" })
-    // console.log('customer id', deleteid)
     submit({ id: deleteid }, { method: "DELETE" })
     setLoader(true)
   }
+
+
+
+
 
   const colums = ['Id', "Title", "vendor", "Type", "Actions"]
   useEffect(() => {
@@ -126,12 +158,14 @@ export default function () {
     }
 
   }, [action_data, loaderData])
+
+
   return (
     <div>
       <Page title="Products">
         <Frame>
-          <Button pressed onClick={() => { submit({ id: '12' }, { method: "PUT" }) }}>{loader ? <Spinner size="small" /> : "+ Add"} </Button>
-
+          {/* <Button pressed onClick={() => { submit({ id: '12' }, { method: "PUT" }) }}>{loader ? <Spinner size="small" /> : "+ Add"} </Button> */}
+          {/* < Button onClick={sortdata}>Test</Button> */}
 
           {/* <input type="text" placeholder="Search..." onChange={() => submit({ id: '11' }, { method: "POST" })}></input> */}
 
@@ -139,9 +173,20 @@ export default function () {
           <Card>
             <DataTable
               headings={colums.map((col) => col)}
-              rows={row}
+              rows={paginatedData}
               columnContentTypes={['text', 'numeric', 'numeric', 'numeric', 'numeric',]}
             />
+
+
+            <Pagination
+              hasNext={currentPage * 5 < row.length}
+              hasPrevious={currentPage > 1}
+              onPrevious={() => handlePageChange(currentPage - 1)}
+              onNext={() => handlePageChange(currentPage + 1)}
+              type="table"
+              label={`Page ${currentPage} of ${Math.floor(row.length / 5)} `}
+            />
+
           </Card>
 
           {msg ? <Toast onDismiss={() => setMsg(false)} content={'Product Deleted... '} duration={4000}></Toast> : null}

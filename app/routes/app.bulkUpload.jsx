@@ -3,12 +3,9 @@ import { Card, Page, Text, Toast, LegacyStack, Spinner, DropZone, Button, Thumbn
 import React, { useState, useEffect } from 'react'
 import { json } from '@remix-run/node'
 
-import { BulkUploadss } from '~/db.server'
 import fs from 'fs'
 import path from 'path'
-// import Product from '../db.server'
 import { parseStringPromise } from 'xml2js'
-// const ngrok = require('ngrok')
 import {
     Bulkstageupload,
     BulkDataupload,
@@ -17,29 +14,9 @@ import {
     ProductGenerateWebhook
 } from '../../api/api.js'
 
-// let data=require('../../upload/csv')
 import csvtojson from 'csvtojson'
-import { ErrorBoundary } from './app.jsx'
-// const path = require('path')
 
-const jsonfilePath = './upload/jsonL/myjson.jsonl'
-const jspath = './upload/jsonL'
 const cspload = './upload/csv'
-// const jsonupload = '/upload/jsonL'
-// const  Product =require('../db/product')
-// window.Buffer = window.Buffer || require("buffer").Buffer
-
-// const storage = multer.diskStorage({
-//     destination: (req, file, cb) => {
-//         cb(null, cspload)
-//     },
-//     filename: (req, file, cb) => {
-//         cb(null, Date.now() + '' + file.originalname)
-//     }
-// })
-
-// const uploadMiddleware = multer({ storage })
-
 export const loader = async () => {
 
     // const filename = `${Date.now()}newfile.jsonl`;
@@ -62,6 +39,26 @@ export const loader = async () => {
 }
 
 export const action = async ({ request }) => {
+    let filedata = await request.formData()
+    if(request.method==='PUT'){
+        let filter=filedata.get('filter')
+        switch (filter) {
+            case "Search":
+                
+                
+                break;
+            case "Sort":
+
+                
+                break;
+        
+            default:
+                break;
+        }
+    }else{
+
+    
+
 
     let filedata = await request.formData()
     let filess = filedata.get('csvFile')
@@ -74,11 +71,9 @@ export const action = async ({ request }) => {
         return json({ error: `File requirement doesn't match... `, status: false })
     } else {
 
-        // let cb_urll = await ngrok.connect(3000)
-        // console.log('cbb',cb_urll)
-        // return null
         const csvFile = new FormData()
         csvFile.append('csvfile', filess)
+
         console.log('cs', csvFile)
         let res = await fetch('http://localhost:5000/upload', { method: "post", body: csvFile })
         res = await res.json()
@@ -90,6 +85,7 @@ export const action = async ({ request }) => {
         if (res) {
             console.log('sdh')
             let jsonArray = await csvtojson().fromFile(filepath)
+            console.log('sdjkfsdgkhg', jsonArray)
             const jsonData = jsonArray.map((data) => {
                 let obj = { input: data }
                 myObject.push(obj)
@@ -102,22 +98,13 @@ export const action = async ({ request }) => {
         let jsonlFileName = 'data.jsonl'
         fs.writeFileSync(jsonlFileName, jsonLdata, 'utf-8')
         const JsonLfile = new FormData()
-
-        // let file = fs.readFileSync(path.join(jspath, 'myjson.jsonl'))
-        // console.log('ff', file)
-        // const a=fs.createReadStream(jsonfilePath)
-        // console.log('xjh',a)
+        
 
         const blob = new Blob([jsonLdata], { type: 'application/jsonl' })
         const jsFile = new File([blob], "myjsonn.jsonl", { type: 'application/jsonl' })
-        // let asd=fs.createReadStream(jsonfilePath)
-        // console.log('adfsd',fs.ReadStr)
-        // JsonLfile.append('file',fs.createReadStream(jsonlFileName))
-        console.log('dt', JsonLfile)
-        // console.log('sda',JSON.parse(JsonLfile))   
-        // console.log('sds',jsFile) 
-
-        console.log('files', filess)
+        
+        // console.log('dt', JsonLfile)
+        // console.log('files', filess)
         try {
 
             // step 1 initiat bulk upload
@@ -126,13 +113,10 @@ export const action = async ({ request }) => {
             if (api_1.data.stagedUploadsCreate.stagedTargets) {
                 let stageddata = api_1.data.stagedUploadsCreate.stagedTargets[0].parameters
                 stageddata.map((data) => {
-                    // console.log('data.name',data.name)
                     JsonLfile.append(data.name, data.value)
                 })
                 JsonLfile.append('file', jsFile)
-                // JsonLfile.append('file', JSON.stringify(myObject))
-
-                console.log('formdata ', JsonLfile)
+                // console.log('formdata ', JsonLfile)
                 // return null
                 try {
                     //  step 2 file upload
@@ -154,19 +138,7 @@ export const action = async ({ request }) => {
 
                                 if (step3.data.bulkOperationRunMutation.bulkOperation) {
                                     return json({ data: step3, status: true })
-                                    // let cb_url = await ngrok.connect(3000)
-                                    // console.log('cb ur ', cb_url)
-                                    // try {
-                                    //     //  step 4 webHook                                   
-                                    //     let result = await ProductGenerateWebhook(cb_url)
-                                    //     console.log('webhook ', result)
-                                    //     return json({ data: result, status: true })
-
-                                    // } catch (error) {
-                                    //     console.log('webhook error', error)
-                                    //     return json({ data: 'something went wrong', status: false, error: error })
-                                    // }
-
+                                    
                                 } else {
                                     return json({ data: step3, status: false, error: step3.data.bulkOperationRunMutation.userErrors[0].message })
                                 }
@@ -194,7 +166,7 @@ export const action = async ({ request }) => {
         }
     }
     // return null
-
+}
 }
 
 
@@ -224,12 +196,12 @@ const BulkUpload = () => {
             <Frame>
                 <Card>
                     <Text>Bulk Upload for Product</Text>
-                    {/* <DropZone dropOnPage onDrop={handleDropZoneDrop}>
-                    {uploadedFiles}
-                    {uploadMessage}
-                </DropZone> */}
+                    
                     <Form encType='multipart/form-data' method='post'>
-                        <input type='file' name='csvFile' />
+                        <div >
+                         <input type='file' name='csvFile'  style={{padding:"60px 120px",border:"1px dashed gray",cursor:"pointer" }} />
+                         <br />
+                        </div>
                         {/* <p>upload ".csv " file only</p> */}
                         <Button submit primarySuccess onClick={() => setLoader(true)}>
                             {loader ? <Spinner size='small' /> : "Upload"}
@@ -250,6 +222,33 @@ const BulkUpload = () => {
 
 export default BulkUpload
 
+// return json({status:true})
+        // let file = fs.readFileSync(path.join(jspath, 'myjson.jsonl'))
+        // console.log('ff', file)
+        // const a=fs.createReadStream(jsonfilePath)
+        // console.log('xjh',a)
+
+
+
+
+// let asd=fs.createReadStream(jsonfilePath)
+        // console.log('adfsd',fs.ReadStr)
+        // JsonLfile.append('file',fs.createReadStream(jsonlFileName))
+
+
+
+// let cb_url = await ngrok.connect(3000)
+                                    // console.log('cb ur ', cb_url)
+                                    // try {
+                                    //     //  step 4 webHook                                   
+                                    //     let result = await ProductGenerateWebhook(cb_url)
+                                    //     console.log('webhook ', result)
+                                    //     return json({ data: result, status: true })
+
+                                    // } catch (error) {
+                                    //     console.log('webhook error', error)
+                                    //     return json({ data: 'something went wrong', status: false, error: error })
+                                    // }
 
 // fs.createReadStream(filess)
 //     .pipe(csv())

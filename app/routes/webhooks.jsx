@@ -14,10 +14,10 @@ export const action = async ({ request }) => {
 
   switch (topic) {
     case "APP_UNINSTALLED":
-      console.log('APP_UNINSTALLED called')
-      if (session) {
-        await db.session.deleteMany({ where: { shop } });
-      }
+      console.log('APP_UNINSTALLED called..')
+      // if (session) {
+      //   await db.session.deleteMany({ where: { shop } });
+      // }
       console.log("nidhi");
       break;
     case "CUSTOMERS_DATA_REQUEST":
@@ -25,6 +25,8 @@ export const action = async ({ request }) => {
     case "SHOP_REDACT":
     case "PRODUCTS_CREATE":
       console.log('PRODUCTS_CREATE webhook called...', payload)
+
+      
       break
     case "CUSTOMERS_CREATE":
       console.log('CUSTOMERS_CREATE webhook called...', payload)

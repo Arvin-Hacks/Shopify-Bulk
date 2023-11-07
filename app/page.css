@@ -1,31 +1,10 @@
-.Polaris-DataTable__TableRow.Polaris-DataTable__TableRow--header {
-    background-color: #f0f0f0;
-    font-weight: bold;
-    /* Add any other styles you want to apply */
-  }
-  
-  /* Apply styles to header cells */
-  .Polaris-DataTable__Cell.Polaris-DataTable__Cell--header {
-    font-size: medium;
-    text-transform: uppercase;
-    font-weight: 500;
-    /* color: #0070f3; */
-    /* Add any other styles you want to apply to header cells */
-  }
-
-  .container{
+.container{
     display: flex;
     list-style: none;
     justify-content: center;
   
   }
-
-  /* .container >* li{
-    max-height: 40px;
-    max-width: 28px;
-  } */
   .page{
-
     background-color: #0073b2cf;
     color: #fff;
     padding: 10px;
@@ -35,9 +14,8 @@
     cursor: pointer;
     text-decoration: none;
     text-align: center;
-    /* width: 50px;
-    height: 43px; */
-    font-weight: bold
+    width: 50px;
+    height: 43px;
   }
   .page a,.previous a,.next a{
     padding: 10px;
@@ -55,7 +33,7 @@
     border-radius: 6px;
     margin-right: 10px;
     cursor: pointer;
-    /* width: 82px */
+    width: 82px
   }
   .active{
       border: 2px solid #000;
