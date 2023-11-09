@@ -12,29 +12,12 @@ import {
     BulkOperationRunMutation,
     GenerateWebhook,
     ProductGenerateWebhook
-} from '../../api/api.js'
+} from '../api/api.server.js'
 
 import csvtojson from 'csvtojson'
 
 const cspload = './upload/csv'
 export const loader = async () => {
-
-    // const filename = `${Date.now()}newfile.jsonl`;
-    // const data = 'This is the content of the new file.';
-    // let fiPath=path.join(jsonupload,filename)
-    // fs.writeFile(fiPath, data, (err) => {
-    //   if (err) {
-    //     console.error('Error creating the file:', err);
-    //   } else {
-    //     console.log('File created successfully.');
-    //   }
-    // })
-    // let result = await fetch('http://localhost:3000/tests')
-    // // result = await result.json()
-    // console.log('result', result)
-
-
-
     return null
 }
 
@@ -110,6 +93,7 @@ export const action = async ({ request }) => {
                                 console.log('step3', step3)
 
                                 if (step3?.data?.bulkOperationRunMutation?.bulkOperation) {
+                                    console.log('bulk data',step3)
                                     return json({ data: step3, status: true })
                                     
                                 } else {

@@ -1,14 +1,22 @@
 node_modules
 
 /.cache
+/upload
 /build
 /app/build
+/app/component
 /public/build/
 /public/_dev
 /app/public/build
 /prisma/dev.sqlite
 /prisma/dev.sqlite-journal
 database.sqlite
+/app/routes/app.AZAZA.jsx
+/app/routes/app.testing.tsx
+/app/routes/app.tttttttt.jsx
+/app/routes/app.temp.jsx
+
+
 
 .env
 package-lock.json

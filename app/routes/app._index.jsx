@@ -1,72 +1,58 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { json } from "@remix-run/node";
 import { Link, useActionData, useLoaderData, useNavigate, useNavigation, useSubmit } from "@remix-run/react";
-import { Button, Card, Frame, Page, Text, } from "@shopify/polaris";
-import { authenticate } from "../shopify.server";
+import { Badge, Button, Card, Frame, IndexTable, Layout, LegacyCard, Page, Text, Pagination } from "@shopify/polaris";
+import { BulkImportList } from '../api/DBquery.server'
+import { CurrentBulkOperation } from '../api/api.server'
 
-const url = 'https://AlphaaaStore.myshopify.com/admin/api/2023-10/graphql.json'
-const token = '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'
-const header = { 'X-Shopify-Access-Token': token, 'Content-Type': 'application/json' }
+export function convertISODate(isoDate) {
+  const date = new Date(isoDate);
 
-export const loader = async ({ request }) => {
-  // await authenticate.admin(request);
-  // let url = "https://storage.googleapis.com/shopify-tiers-assets-prod-us-east1/0lp31nbswdia0ix0kaame1gftwuz?GoogleAccessId=assets-us-prod%40shopify-tiers.iam.gserviceaccount.com&Expires=1699358043&Signature=l6%2FbmtPrYuQC15%2BUI0SlQfVori8Z63uyzBBa5J0Rm2RQiRk9MtgIR%2FohFNCjfm5MTe442c5jfD7jr%2FbhZp%2Bs6reDF5l%2BR2wcpXSiq4%2FOHjd221%2FxhRvIQeZnwIctLsXt7kHTw%2FjmgqgUPebkAztiRP3O%2BSiqUDcxSE6bzXat%2F9OG7E0PXwR5OAI7DWa0WYjb5Kl7WAPre9RrSGszCYEfsKwi7NlC9fY5gkDZZ%2FNQ%2BHWJhhH8XuexZ4a%2BrnH1wAchWjiEKYw6LcvC2VPs8Ds2fuswm6dyHgbn9mC9AdyMT4%2BCgG42Uwg6eT17Q%2FCZ2%2FIkENUTu4JD8jvQWeTUQsaQBw%3D%3D&response-content-disposition=attachment%3B+filename%3D%22bulk-3602315477285.jsonl%22%3B+filename%2A%3DUTF-8%27%27bulk-3602315477285.jsonl&response-content-type=application%2Fjsonl"
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
 
+  return `${day}-${month}-${year}`;
+}
+
+export const loader = async () => {
   try {
-    const graphql = JSON.stringify({
-      query: `query {
-        currentBulkOperation(type: MUTATION) {
-           id
-           status
-           errorCode
-           createdAt
-           completedAt
-           objectCount
-           fileSize
-           url
-           partialDataUrl
-        }
-       }
-       `
-    })
 
-    let result = await fetch(url, { method: 'post', body: graphql, headers: header })
+    let result = await CurrentBulkOperation()
     result = await result.json()
-    // console.log('Result', result)
-    
-    return json({ data: result, status: true })
+    console.log('ressss', result,)
+    let bulklist = await BulkImportList()
+    bulklist = await bulklist.json()
+    console.log('tessssssss', bulklist,)
+    return json({ data: result, Bulklist: bulklist, status: true })
 
   } catch (error) {
     // console.log('error', error)
     return json({ data: error, status: false })
   }
-
-
-  // let result=await fetch('http://localhost:3000/',{method:'post'})
-  // result=await result.json()
-
-  // return result;
   return null
 };
 
-export const action = async ({ request }) => {
-  return null
-};
 
 export default function Index() {
-  // const nav = useNavigation();
   const Navigate = useNavigate()
-  // const actionData = useActionData();
   const loader = useLoaderData()
-  // const submit = useSubmit();
+  console.log('loader', loader)
+  const bulkdata = loader?.Bulklist?.data
 
-  // // useEffect(() => {
-  // //   if(actionData){
-  // //     console.log('action dataa',actionData)
-  // //   }
-  // // }, [actionData]);
-  // console.log('app data', loader)
-  // console.warn('action data', loader.status)
+  const [currentPage, setCurrentPage] = useState(1);
+  const startIndex = (currentPage - 1) * 5;
+  const endIndex = startIndex + 5;
+  const paginatedData = bulkdata.slice(startIndex, endIndex);
+
+  const resourceName = {
+    singular: 'Bulk',
+    plural: 'Bulks',
+  }
+
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+  };
 
   return (
     <Page title="">
@@ -75,20 +61,72 @@ export default function Index() {
       </ui-title-bar>
 
       <Frame>
-        <Card>
-          <div style={{ display: "flex", }}>
-            <div style={{ width: '300px', height: '200px', border: '1px solid gray' }}>
-              <Text as="h3">Current Bulk Upload Status</Text>
+        <Layout>
+          <Layout.Section>
+            <LegacyCard title="Current Bulk Import " sectioned>
+              <Text variant="headingMd" as="h6">Status: &nbsp;<Badge progress="">
+                {loader.status ? loader?.data?.data?.data?.currentBulkOperation?.status : 'Unavailable'}
+              </Badge> </Text>
+              <br />
+              <Button onClick={() => Navigate('/app/bulkUpload')} size="slim" primary>Bulk Import</Button>
 
-              {loader.status ? loader.data.data.currentBulkOperation.status : 'no data'}
-              {/* <p>{console.log('st',loader.data.data.currentBulkOperation.status)}</p> */}
-            </div>
-            <div style={{ marginLeft: '20px' }} >
-              {/* <Link to="/app/bulkUpload">Bulk upload</Link> */}
-              <Button pressed onClick={() => Navigate('/app/bulkUpload')}>Bulk import</Button>
-            </div>
-          </div>
-        </Card>
+            </LegacyCard>
+          </Layout.Section>
+          <Layout.Section variant="oneThird">
+            <LegacyCard title="Bulk Operations" sectioned>
+              <IndexTable
+                resourceName={resourceName}
+                itemCount={bulkdata.length}
+                selectable={false}
+                headings={[
+                  { title: 'ID' },
+                  { title: 'Status' },
+                  { title: 'Type' },
+                  { title: 'CreatedAt' },
+
+                ]}
+              >
+                {paginatedData.map(
+                  (
+                    data,
+                    index,
+                  ) => (
+                    <IndexTable.Row
+                      id={data._id}
+                      key={data._id}
+                      position={index}
+                    >
+                      <IndexTable.Cell>
+                        <Text variant="bodyMd" fontWeight="bold" as="span">
+                          {data._id}
+                        </Text>
+                      </IndexTable.Cell>
+                      <IndexTable.Cell><Badge >{data.status}</Badge></IndexTable.Cell>
+                      <IndexTable.Cell>{data.type}</IndexTable.Cell>
+                      <IndexTable.Cell>{convertISODate(data.createdAt)}</IndexTable.Cell>
+
+                    </IndexTable.Row>
+                  ),
+                )}
+              </IndexTable>
+
+              <Pagination
+                hasNext={currentPage * 5 < bulkdata.length}
+                hasPrevious={currentPage > 1}
+                onPrevious={() => handlePageChange(currentPage - 1)}
+                onNext={() => handlePageChange(currentPage + 1)}
+                type="table"
+                label={`Page ${currentPage} of ${Math.ceil(bulkdata.length / 5)} `}
+              // label={`product ${currentPage*5} of ${products.length} `}
+              />
+
+
+            </LegacyCard>
+          </Layout.Section>
+        </Layout>
+        <Layout>
+        </Layout>
+
       </Frame>
 
     </Page>

@@ -1,12 +1,12 @@
 import {
-  Button, Card, DataTable, Frame, Badge, Page, Toast, Spinner, Modal, Text, Pagination, TextField, IndexTable, useIndexResourceState
+  Button, Card, DataTable, Frame, Badge, Page, Toast, Spinner, Modal, Text, Pagination, TextField, IndexTable, useIndexResourceState, ChoiceList, Select
 } from "@shopify/polaris";
 import { json } from '@remix-run/node'
 import { useActionData, useLoaderData, useNavigate, useSubmit } from "@remix-run/react";
-import ReactPaginate from 'react-paginate'
 import React, { useEffect, useState } from 'react'
 const { Product } = require('../db.server')
 import Appcss from '../../app.css'
+import { GetProducts, AddProduct, DeleteProduct, FilterProduct } from '../api/DBquery.server'
 
 export const links = () => {
   [{ rel: "stylesheet", href: Appcss }]
@@ -15,7 +15,7 @@ export const links = () => {
 export const loader = async ({ request }) => {
 
   if (request.method === "GET") {
-    let result = await Product.find()
+    let result = await GetProducts()
     return json(result)
   } else {
     return null
@@ -25,20 +25,15 @@ export const loader = async ({ request }) => {
 export const action = async ({ request }) => {
 
   const bodydata = await request.formData()
-
-  console.log('body data', bodydata)
   let id = bodydata.get('id')
+
   switch (request.method) {
     case "PUT":
       // Add Static product data
-      console.log('Post id', bodydata.get('id'))
       try {
-        const data = new Product({ title: 'a1' })
-        let res = await data.save()
-        console.log('res', res)
+        let res = await AddProduct()
         return json({ data: res, status: true })
       } catch (error) {
-        console.log('result', error)
         return json({ error: "Something went Wrong", status: false })
       }
       break;
@@ -46,44 +41,23 @@ export const action = async ({ request }) => {
       // Delete Product from database
       console.log('Delete id', id)
       try {
-        let result = await Product.deleteOne({ _id: id })
-        console.log('result', result)
+        let result = await DeleteProduct(id)
         return json({ data: result, status: true })
       } catch (error) {
-        console.log('result', error)
         return json({ error: "Something went Wrong", status: false })
       }
-      break;
     case "POST":
       // filter Product Data
-      let filter = bodydata.get('filter')
-      console.log('filter...', filter)
-      switch (filter) {
-        case "Search":
-          let key = bodydata.get('key')
-          try {
-            let result = await Product.find({
-              "$or":
-                [
-                  { title: { $regex: key, $options: "i" } },]
-            }, [])
-            console.log('result', result)
-            return json({ data: result, status: true, flage: true })
-          } catch (error) {
-            console.log('result', error)
-            return json({ error: "Something went Wrong", status: false })
-          }
-          break;
-        case "Sort":
-          break;
-        default:
-          break;
+      try {
+        let filter = bodydata.get('filter')
+        let key = bodydata.get('key')
+        let result = await FilterProduct(filter, key)
+        return json({ data: result, status: true, flage: true })
+      } catch (error) {
+        return json({ error: "Something went Wrong", status: false })
       }
-
-      break;
     default:
-      return null
-      break;
+      return json({ error: "Something went Wrong", status: false })
   }
 }
 
@@ -94,10 +68,12 @@ export const shouldRevalidate = () => {
 
 
 export default function () {
-  const action_data = useActionData()
-  const loaderData = useLoaderData()
   const submit = useSubmit()
   const Navigate = useNavigate()
+  const action_data = useActionData()
+  const loaderData = useLoaderData()
+  const [products, setProducts] = useState(loaderData)
+
 
   const [active, seActive] = useState(false)
   const [msg, setMsg] = useState(false)
@@ -105,42 +81,16 @@ export default function () {
   const [loader, setLoader] = useState(false)
   const [deleteid, setDeleteid] = useState('')
   const [currentPage, setCurrentPage] = useState(1);
-  const [keyStatust, setKeyStatust] = useState('')
-  const [products, setProducts] = useState(loaderData)
-  // console.log('lpoasder',loaderData)
-
-  // Covert Product data into row Formate (Polaris Datatable)
-  const row = loaderData.map((data) => [
-    // const [row, setRow] = useState(loaderData.map((data) => [
-    data.productId,
-    data.title,
-    data.vendor,
-    data.product_type,
-    <div>
-      <Button pressed onClick={() => Navigate(`/app/updateProduct/${data._id}`)}>Update</Button>&nbsp;
-      <Button destructive onClick={() => { seActive(true), setDeleteid(data._id) }}>
-        Delete
-      </Button>
-    </div>
-
-  ])
-  const colums = ['Id', "Title", "vendor", "Type", "Actions"]
-
-
-
-  // Handle Pagination Change 
-  const handlePageChange = (newPage) => {
-    setCurrentPage(newPage);
-  };
+  const [selected, setSelected] = useState('')
 
   const startIndex = (currentPage - 1) * 5;
   const endIndex = startIndex + 5;
   const paginatedData = products.slice(startIndex, endIndex);
 
-
-  console.warn('Action loaded', loaderData)
-
-  // console.log('r',row)
+// Handle Pagination Change 
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+  };
 
   // Handle Product Delete Operation 
   const handleDelete = () => {
@@ -148,7 +98,7 @@ export default function () {
     setLoader(true)
   }
 
-useEffect(() => {
+  useEffect(() => {
     if (action_data) {
       setLoader(false); seActive(false);
       if (!action_data?.flage) {
@@ -164,46 +114,55 @@ useEffect(() => {
 
   }, [action_data])
 
-  console.log('loader..', loaderData)
 
   const resourceName = {
     singular: 'Product',
     plural: 'Products',
   };
 
-  // const { selectedResources, allResourcesSelected, handleSelectionChange } =useIndexResourceState(products)
 
-  const handlesearch = (key) => {
-
+  const handlesearch = (filtertype, key) => {
     if (key !== '') {
-      submit({ key: key, filter: 'Search' }, { method: 'POST' })
+      submit({ key: key, filter: filtertype }, { method: 'POST' })
     }
     else {
       console.log('empty', loaderData)
       setProducts(loaderData)
     }
   }
-  const sortt=['false','true','true','false','false']
+
+  const select_option = [
+    { label: 'Sort by ', disabled: true },
+    { label: 'Newest Products', value: '-1' },
+    { label: 'Oldest Products', value: '1' },
+  ]
   return (
-    <div> 
+    <div>
       <Page title="Products">
         <Frame>
-          <Button pressed onClick={() => { submit({ id: '12' }, { method: "PUT" }) }}>{loader ? <Spinner size="small" /> : "+ Add"} </Button>
-          {/* < Button onClick={sortdata}>Test</Button> */}
-          <div style={{ border: '1px solid gray', padding: "0px", borderRadius: '8px' }}>
-            <input
-              className="Polaris-TextField__Input"
-              // label="Search"
-              placeholder="Search..."
-              type="text"
-              autoComplete="off"
-              onChange={(value) => handlesearch(value.target.value)}
-            />
+          {/* <Button pressed onClick={() => { submit({ id: '12' }, { method: "PUT" }) }}>{loader ? <Spinner size="small" /> : "+ Add"} </Button> */}
+          <div style={{ display: "flex" }}>
+            <div style={{ border: '1px solid gray', padding: "0px", borderRadius: '8px', margin: "10px" }}>
+              <input
+                className="Polaris-TextField__Input"
+                // label="Search"
+                placeholder="Search..."
+                type="text"
+                autoComplete="off"
+                onChange={(value) => handlesearch('Search', value.target.value)}
+              />
 
+            </div>
+            <div style={{ width: "200px", margin: "10px" }}>
+              <Select
+                options={select_option}
+                // labelInline
+                // label="Sort by"
+                value={selected}
+                onChange={(value) => { setSelected(value), handlesearch('Sort', value) }}
+              />
+            </div>
           </div>
-
-
-          {/* <input type="text" placeholder="" onChange={() => submit({ id: '11' }, { method: "POST" })}></input> */}
 
           <Card>
             <Pagination
@@ -213,19 +172,13 @@ useEffect(() => {
               onNext={() => handlePageChange(currentPage + 1)}
               type="table"
               label={`Page ${currentPage} of ${Math.ceil(products.length / 5)} `}
+            // label={`product ${currentPage*5} of ${products.length} `}
             />
             <IndexTable
               resourceName={resourceName}
               itemCount={products.length}
               selectable={false}
-              // sortable={sortt}
-
-              //   selectedItemsCount={
-              //     allResourcesSelected ? 'All' : selectedResources.length
-              //   }
-              //   onSelectionChange={handleSelectionChange}
               headings={[
-                { title: 'ProductID' },
                 { title: 'Title' },
                 { title: 'Vendor' },
                 { title: 'Type' },
@@ -240,15 +193,13 @@ useEffect(() => {
                   <IndexTable.Row
                     id={_id}
                     key={_id}
-                    // selected={selectedResources.includes(id)}
                     position={index}
                   >
                     <IndexTable.Cell>
                       <Text variant="bodyMd" fontWeight="bold" as="span">
-                        {productId}
+                        {title}
                       </Text>
                     </IndexTable.Cell>
-                    <IndexTable.Cell>{title}</IndexTable.Cell>
                     <IndexTable.Cell>{vendor}</IndexTable.Cell>
                     <IndexTable.Cell>{product_type}</IndexTable.Cell>
                     <IndexTable.Cell>
@@ -262,23 +213,10 @@ useEffect(() => {
                   </IndexTable.Row>
                 ),
               )
-                // :
-                // <IndexTable.Row>
-                //   <IndexTable.Cell>
-                //     No Product Found
-                //   </IndexTable.Cell>
-                // </IndexTable.Row>
+
               }
             </IndexTable>
           </Card>
-          
-          {/* <Card>
-            <DataTable
-              headings={colums.map((col) => col)}
-              rows={paginatedData}
-              columnContentTypes={['text', 'numeric', 'numeric', 'numeric', 'numeric',]}
-            />
-          </Card> */}
 
           {/* Toaster for success & error message */}
           {msg ? <Toast onDismiss={() => setMsg(false)} content={'Product Deleted... '} duration={4000}></Toast> : null}

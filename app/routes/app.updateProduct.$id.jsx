@@ -2,35 +2,20 @@ import { json } from '@remix-run/node'
 import { Form, useActionData, useLoaderData, useNavigate, useNavigation, useSubmit } from '@remix-run/react'
 import { Button, Card, Frame, Page, Text, TextField, Toast,Spinner } from '@shopify/polaris'
 import React, { useEffect, useState } from 'react'
-import { Product } from '~/db.server'
-const token = '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'
-const url = 'https://AlphaaaStore.myshopify.com/admin/api/2023-10/products.json'
+import {GetProductDetails ,UpdateProductdata} from '../api/DBquery.server'
+
 
 
 export const loader = async ({ params }) => {
-    console.log('params', params)
     if (params.id) {
         try {
-            let result = await Product.find({ _id: params.id })
-            console.log('result', result)
+            let result = await GetProductDetails(params.id)
             return json({ data: result, status: true })
         } catch (error) {
             console.log('result', error)
             return json({ error: "Something went Wrong", status: false })
         }
     }
-
-    // try {
-    //     const header = { 'X-Shopify-Access-Token': token, 'Content-Type': 'application/json' }
-    //     let result = await fetch(`https://AlphaaaStore.myshopify.com/admin/api/2023-10/products/${params.id}.json`, { method: "get", headers: header })
-    //     result = await result.json()
-    //     // console.log('product data', result)
-    //     return result
-    // } catch (error) {
-    //     console.log('product data error', error)
-    //     return []
-
-    // }
     return null
 }
 
@@ -42,11 +27,7 @@ export const action = async ({ request }) => {
     }
     console.log('product', product)
     try {
-        let result = await Product.updateOne({ _id: product.id }, { $set: product })
-
-        console.log('res', result)
-
-        // console.log('ressult...', result)
+        let result = await UpdateProductdata(product.id,product)
         return json({ data: result, status: true })
 
     } catch (error) {
@@ -54,7 +35,6 @@ export const action = async ({ request }) => {
         return json({ data: error, status: false })
 
     }
-    console.log('from data', bodydata)
     return null
 }
 
@@ -70,9 +50,6 @@ const UpdateProduct = () => {
     const [loader, setLoader] = useState(false)
 
     const product = loaderdata.data[0]
-    console.log('prodcut', loaderdata)
-    // console.warn('product details',loaderdata)
-    console.log('detail...', product)
 
     const [productdata, setProductdat] = useState({
         id: product._id,
@@ -83,16 +60,13 @@ const UpdateProduct = () => {
 
     const updateproduct = () => {
         if (productdata.title !== '') {
-            console.warn('formdata...', productdata)
-
             submit(productdata, { method: 'PUT' })
             setLoader(true)
-            // setTimeout(() => Navigate('/app'), 5000)
         } else {
             alert('Please Provide required data')
         }
-
     }
+
     useEffect(() => {
         if (action_response) {
             setLoader(false)
@@ -100,8 +74,6 @@ const UpdateProduct = () => {
             action_response.status ?
                 (setMsg(true), setTimeout(() => { Navigate('/app/product'), 4000 }))
                 : seterrMsg(true)
-            // Navigate('/app')
-            // setTimeout(() => { console.warn('masg state', msg) }, 5000)
         }
 
     }, [action_response])
@@ -148,9 +120,6 @@ const UpdateProduct = () => {
         </Page>
     )
 }
-
-
-
     
 
 export default UpdateProduct

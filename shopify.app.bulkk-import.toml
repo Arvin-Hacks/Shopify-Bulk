@@ -2,19 +2,19 @@
 
 name = "Bulkk-Import"
 client_id = "e8713189b5202bee92713ccf9fdf30a7"
-application_url = "https://tested-costumes-mark-bass.trycloudflare.com"
+application_url = "https://weblog-cancer-question-applies.trycloudflare.com"
 embedded = true
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "write_products,read_customers,read_metaobjects"
+scopes = "write_products,read_assigned_fulfillment_orders,read_merchant_managed_fulfillment_orders,read_third_party_fulfillment_orders,write_assigned_fulfillment_orders,write_merchant_managed_fulfillment_orders,write_third_party_fulfillment_orders"
 
 [auth]
 redirect_urls = [
-  "https://tested-costumes-mark-bass.trycloudflare.com/auth/callback",
-  "https://tested-costumes-mark-bass.trycloudflare.com/auth/shopify/callback",
-  "https://tested-costumes-mark-bass.trycloudflare.com/api/auth/callback",
-  "https://tested-costumes-mark-bass.trycloudflare.com/.shopify/graphiql/auth/callback"
+  "https://weblog-cancer-question-applies.trycloudflare.com/auth/callback",
+  "https://weblog-cancer-question-applies.trycloudflare.com/auth/shopify/callback",
+  "https://weblog-cancer-question-applies.trycloudflare.com/api/auth/callback",
+  "https://weblog-cancer-question-applies.trycloudflare.com/.shopify/graphiql/auth/callback"
 ]
 
 [webhooks]

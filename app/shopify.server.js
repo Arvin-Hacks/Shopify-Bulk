@@ -10,10 +10,11 @@ import {MongoDBSessionStorage} from '@shopify/shopify-app-session-storage-mongod
 import { restResources } from "@shopify/shopify-api/rest/admin/2023-07";
 // import mongodbs from "./db.server";
 
+console.log('tests',process.env.SHOPIFY_APP_URL)
 
 const shopify = shopifyApp({
   apiKey: process.env.SHOPIFY_API_KEY,
-  apiSecretKey: process.env.SHOPIFY_API_SECRET || "",
+  apiSecretKey: process.env.SHOPIFY_API_SECRET || "" ,
   apiVersion: LATEST_API_VERSION,
   scopes: process.env.SCOPES?.split(","),
   appUrl: process.env.SHOPIFY_APP_URL || "",
@@ -30,6 +31,11 @@ const shopify = shopifyApp({
       deliveryMethod: DeliveryMethod.Http,
       callbackUrl: "/webhooks",
     },
+    BULK_OPERATIONS_FINISH: {
+      deliveryMethod: DeliveryMethod.Http,
+      callbackUrl: "/webhooks",
+    },
+    
   },
   hooks: {
     afterAuth: async ({ session }) => {
@@ -46,6 +52,7 @@ const shopify = shopifyApp({
     ? { customShopDomains: [process.env.SHOP_CUSTOM_DOMAIN] }
     : {}),
 });
+
 
 // console.log('shopify...',shopify)
 

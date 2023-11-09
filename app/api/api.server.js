@@ -1,15 +1,18 @@
 import axios from "axios"
-// import ngrok from "ngrok"
-const url = 'https://AlphaaaStore.myshopify.com/admin/api/2023-10/graphql.json'
-const webhookurl = 'https://AlphaaaStore.myshopify.com/admin/api/2023-10/webhooks.json'
-const token = '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'
+import { json } from '@remix-run/node'
+import dotenv from 'dotenv'
+
+dotenv.config({path:'.env'})
+// import  express from '@remix-run/express'
+// express.initEnv()
+const url = process.env.GRAPH_URL
+console.log('urlll', url)
+
+const webhookurl = process.env.WEBHOOK_URL
+const token = process.env.ACCESS_TOKEN
 const header = { 'X-Shopify-Access-Token': token, 'Content-Type': 'application/json' }
 
-// export const getCallbackurl = async () => {
-//   let data = await ngrok.connect(3000)
-//   console.log('getCallbackurl', data)
-//   return null
-// }
+console.log('tokenn', token)
 
 export const Bulkstageupload = async () => {
 
@@ -194,14 +197,12 @@ export const ProductGenerateWebhook = async (cb_url) => {
 
 }
 
-export const serchProduct=(filter,key)=>{
+export function convertISODate(isoDate) {
+  const date = new Date(isoDate);
 
-  switch (filter) {
-    case "Search":
-      
-      break;
-  
-    default:
-      break;
-  }
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+
+  return `${day}-${month}-${year}`;
 }
