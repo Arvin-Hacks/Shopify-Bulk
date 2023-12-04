@@ -4,9 +4,9 @@ import {
 import { json } from '@remix-run/node'
 import { useActionData, useLoaderData, useNavigate, useSubmit } from "@remix-run/react";
 import React, { useEffect, useState } from 'react'
-const { Product } = require('../db.server')
+// const { Product } = require('../db.server')
 import Appcss from '../../app.css'
-import { GetProducts, AddProduct, DeleteProduct, FilterProduct } from '../api/DBquery.server'
+import { GetProducts, AddProduct, DeleteProduct, FilterProduct, searchAndSort } from '../api/DBquery.server'
 
 export const links = () => {
   [{ rel: "stylesheet", href: Appcss }]
@@ -16,6 +16,8 @@ export const loader = async ({ request }) => {
 
   if (request.method === "GET") {
     let result = await GetProducts()
+    result = await result.json()
+    // console.log('jh', result)
     return json(result)
   } else {
     return null
@@ -42,6 +44,7 @@ export const action = async ({ request }) => {
       console.log('Delete id', id)
       try {
         let result = await DeleteProduct(id)
+        result = await result.json()
         return json({ data: result, status: true })
       } catch (error) {
         return json({ error: "Something went Wrong", status: false })
@@ -52,6 +55,7 @@ export const action = async ({ request }) => {
         let filter = bodydata.get('filter')
         let key = bodydata.get('key')
         let result = await FilterProduct(filter, key)
+        result = await result.json()
         return json({ data: result, status: true, flage: true })
       } catch (error) {
         return json({ error: "Something went Wrong", status: false })
@@ -61,18 +65,13 @@ export const action = async ({ request }) => {
   }
 }
 
-export const shouldRevalidate = () => {
-  console.log('aaaaaaaaaa')
-  return false
-}
-
-
 export default function () {
   const submit = useSubmit()
   const Navigate = useNavigate()
   const action_data = useActionData()
   const loaderData = useLoaderData()
   const [products, setProducts] = useState(loaderData)
+
 
 
   const [active, seActive] = useState(false)
@@ -83,11 +82,14 @@ export default function () {
   const [currentPage, setCurrentPage] = useState(1);
   const [selected, setSelected] = useState('')
 
+  // console.log('loadxer', loaderData)
+
   const startIndex = (currentPage - 1) * 5;
   const endIndex = startIndex + 5;
   const paginatedData = products.slice(startIndex, endIndex);
 
-// Handle Pagination Change 
+
+  // Handle Pagination Change 
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);
   };
@@ -107,12 +109,12 @@ export default function () {
 
       } else {
         console.warn('filterrrrrrrrrrrrr', action_data)
-        setProducts(action_data?.data)
+        setProducts(action_data?.data?.data)
       }
 
     }
 
-  }, [action_data])
+  }, [action_data,])
 
 
   const resourceName = {
@@ -120,7 +122,7 @@ export default function () {
     plural: 'Products',
   };
 
-
+  // handle search operation 
   const handlesearch = (filtertype, key) => {
     if (key !== '') {
       submit({ key: key, filter: filtertype }, { method: 'POST' })
@@ -132,10 +134,11 @@ export default function () {
   }
 
   const select_option = [
-    { label: 'Sort by ', disabled: true },
-    { label: 'Newest Products', value: '-1' },
-    { label: 'Oldest Products', value: '1' },
+    { label: 'Sort by ', disabled: true, key: '1' },
+    { label: 'Newest Products', value: '-1', key: '2' },
+    { label: 'Oldest Products', value: '1', key: '3' },
   ]
+
   return (
     <div>
       <Page title="Products">

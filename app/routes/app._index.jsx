@@ -4,41 +4,41 @@ import { Link, useActionData, useLoaderData, useNavigate, useNavigation, useSubm
 import { Badge, Button, Card, Frame, IndexTable, Layout, LegacyCard, Page, Text, Pagination } from "@shopify/polaris";
 import { BulkImportList } from '../api/DBquery.server'
 import { CurrentBulkOperation } from '../api/api.server'
+import { convertISODate } from '../api/utiity'
+import { authenticate } from "~/shopify.server";
+// import { authenticate } from "~/shopify.server";
 
-export function convertISODate(isoDate) {
-  const date = new Date(isoDate);
 
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const year = date.getFullYear();
+export const loader = async ({ request }) => {
+  const { admin, session } = await authenticate.admin(request)
 
-  return `${day}-${month}-${year}`;
-}
+  const shopUrl = session.shop
 
-export const loader = async () => {
+  // console.log('req...', shopUrl)
+
   try {
 
     let result = await CurrentBulkOperation()
     result = await result.json()
-    console.log('ressss', result,)
+    // console.log('bullkk',result)
     let bulklist = await BulkImportList()
+
     bulklist = await bulklist.json()
-    console.log('tessssssss', bulklist,)
     return json({ data: result, Bulklist: bulklist, status: true })
 
   } catch (error) {
     // console.log('error', error)
     return json({ data: error, status: false })
   }
-  return null
 };
-
 
 export default function Index() {
   const Navigate = useNavigate()
+  // Navigate('.', { replace: true })
   const loader = useLoaderData()
-  console.log('loader', loader)
   const bulkdata = loader?.Bulklist?.data
+
+  // console.log('loaderr',loader)
 
   const [currentPage, setCurrentPage] = useState(1);
   const startIndex = (currentPage - 1) * 5;
@@ -53,20 +53,18 @@ export default function Index() {
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);
   };
-
+  
   return (
-    <Page title="">
-      <ui-title-bar title="Dashboard">
-
-      </ui-title-bar>
+    <Page title="Dashboard">
 
       <Frame>
         <Layout>
           <Layout.Section>
             <LegacyCard title="Current Bulk Import " sectioned>
-              <Text variant="headingMd" as="h6">Status: &nbsp;<Badge progress="">
+              <Text variant="bodySm" as="h2">Status: &nbsp;<Badge progress="">
                 {loader.status ? loader?.data?.data?.data?.currentBulkOperation?.status : 'Unavailable'}
-              </Badge> </Text>
+              </Badge></Text>
+              <Text variant="bodySm" as="h2">Created At: &nbsp; {loader.status ? loader?.data?.data?.data?.currentBulkOperation?.createdAt : 'Unavailable'}</Text>
               <br />
               <Button onClick={() => Navigate('/app/bulkUpload')} size="slim" primary>Bulk Import</Button>
 

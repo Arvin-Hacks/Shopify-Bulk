@@ -1,19 +1,17 @@
 import axios from "axios"
 import { json } from '@remix-run/node'
+import { BulkImportEntry } from './DBquery.server'
 import dotenv from 'dotenv'
+dotenv.config({ path: '.env' })
 
-dotenv.config({path:'.env'})
-// import  express from '@remix-run/express'
-// express.initEnv()
+
+
 const url = process.env.GRAPH_URL
-console.log('urlll', url)
-
 const webhookurl = process.env.WEBHOOK_URL
 const token = process.env.ACCESS_TOKEN
 const header = { 'X-Shopify-Access-Token': token, 'Content-Type': 'application/json' }
 
-console.log('tokenn', token)
-
+// Step 1 for bulk import product (stagedUploadsCreate mutation)
 export const Bulkstageupload = async () => {
 
   try {
@@ -52,9 +50,10 @@ export const Bulkstageupload = async () => {
 
 }
 
+// Step 2 for bulk import product (uploads files and other data)
 export const BulkDataupload = async (data) => {
 
-  console.log('sdfsjhcfs', data)
+  // console.log('sdfsjhcfs', data)
 
   try {
     let config = {
@@ -63,7 +62,7 @@ export const BulkDataupload = async (data) => {
       data: data
     }
     let api_2 = await axios(config)
-    console.log('api_2', api_2)
+    // console.log('api_2', api_2)
     return api_2
 
   } catch (error) {
@@ -74,6 +73,8 @@ export const BulkDataupload = async (data) => {
 
 }
 
+// step 3 for bulk import mutation (starts importing products from file)
+// Also makes an entry of this operation in local database
 export const BulkOperationRunMutation = async (key) => {
 
   try {
@@ -86,6 +87,8 @@ export const BulkOperationRunMutation = async (key) => {
               id
               url
               status
+              createdAt
+              type
             }
             userErrors {
               message
@@ -99,7 +102,14 @@ export const BulkOperationRunMutation = async (key) => {
 
     let result = await fetch(url, { method: 'post', body: graphql, headers: header })
     result = await result.json()
-    console.log('step3', result)
+    if (result?.data?.bulkOperationRunMutation?.bulkOperation) {
+      let product = result?.data?.bulkOperationRunMutation?.bulkOperation
+      let data = await BulkImportEntry(product)
+      data = await data.json()
+      console.log('BulkImportEntry log', data)
+
+    }
+    // console.log('step3', result)
     return result
 
   } catch (error) {
@@ -110,6 +120,7 @@ export const BulkOperationRunMutation = async (key) => {
 
 }
 
+// Get CurrentBulkOperation status 
 export const CurrentBulkOperation = async () => {
   try {
     const graphql = JSON.stringify({
@@ -131,7 +142,7 @@ export const CurrentBulkOperation = async () => {
 
     let result = await fetch(url, { method: 'post', body: graphql, headers: header })
     result = await result.json()
-    console.log('Result', result)
+    // console.log('Result', result)
 
     return json({ data: result, status: true })
 
@@ -197,12 +208,5 @@ export const ProductGenerateWebhook = async (cb_url) => {
 
 }
 
-export function convertISODate(isoDate) {
-  const date = new Date(isoDate);
 
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const year = date.getFullYear();
 
-  return `${day}-${month}-${year}`;
-}

@@ -1,15 +1,16 @@
 import { json } from '@remix-run/node'
-import { Form, useActionData, useLoaderData, useNavigate, useNavigation, useSubmit } from '@remix-run/react'
-import { Button, Card, Frame, Page, Text, TextField, Toast,Spinner } from '@shopify/polaris'
-import React, { useEffect, useState } from 'react'
+import { Form, useActionData, useLoaderData, useNavigate, useSubmit } from '@remix-run/react'
+import { Button, Card, Frame, Page, TextField, Toast,Spinner } from '@shopify/polaris'
+import { useEffect, useState } from 'react'
 import {GetProductDetails ,UpdateProductdata} from '../api/DBquery.server'
-
 
 
 export const loader = async ({ params }) => {
     if (params.id) {
         try {
             let result = await GetProductDetails(params.id)
+            result=await result.json()
+
             return json({ data: result, status: true })
         } catch (error) {
             console.log('result', error)
@@ -28,6 +29,7 @@ export const action = async ({ request }) => {
     console.log('product', product)
     try {
         let result = await UpdateProductdata(product.id,product)
+        result=await result.json()
         return json({ data: result, status: true })
 
     } catch (error) {
@@ -48,8 +50,8 @@ const UpdateProduct = () => {
     const [msg, setMsg] = useState(false)
     const [errmsg, seterrMsg] = useState(false)
     const [loader, setLoader] = useState(false)
-
-    const product = loaderdata.data[0]
+    console.log('lllll',loaderdata)
+    const product = loaderdata.data.data[0]
 
     const [productdata, setProductdat] = useState({
         id: product._id,
@@ -57,7 +59,8 @@ const UpdateProduct = () => {
         vendor: product.vendor? product.vendor : '' ,
         product_type: product.product_type? product.product_type:'',
     })
-
+ 
+    // Update product in db
     const updateproduct = () => {
         if (productdata.title !== '') {
             submit(productdata, { method: 'PUT' })

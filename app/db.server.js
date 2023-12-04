@@ -16,15 +16,15 @@ const productSchema = mongoose.Schema({
 
 let Users
 try {
-  Users = mongoose.model('bulkdatas')
+  Users = mongoose.model('products')
 } catch (error) {
-  Users = mongoose.model('bulkdatas', productSchema)
+  Users = mongoose.model('products', productSchema)
 }
 
 const asd = mongoose.Schema({
   admin_graphql_api_id: String,
-  // completed_at: String,
-  // created_at: String,
+  completed_at: String,
+  created_at: String,
   error_code: String,
   status: String,
   type: String,
@@ -33,23 +33,12 @@ const asd = mongoose.Schema({
 })
 
 
-
-
-
 let Bulk
 try {
   Bulk = mongoose.model('bulkupoads')
 } catch (error) {
   Bulk = mongoose.model('bulkupoads', asd)
 }
-
-
-
-
-
-
-
-
 
 
 // export const BulkUpload= mongoose.model('bulkupoads') || mongoose.model('bulkupoads',asd)

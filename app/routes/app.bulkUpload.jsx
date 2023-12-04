@@ -1,22 +1,17 @@
 import { Form, useActionData, useLoaderData, useNavigate, useSubmit, } from '@remix-run/react'
-import { Card, Page, Text, Toast, LegacyStack, Spinner, DropZone, Button, Thumbnail, Frame } from '@shopify/polaris'
-import React, { useState, useEffect } from 'react'
+import { Card, Page, Text, Toast, Button, Frame } from '@shopify/polaris'
+import { useState, useEffect, useTransition } from 'react'
 import { json } from '@remix-run/node'
 
-import fs from 'fs'
-import path from 'path'
 import { parseStringPromise } from 'xml2js'
+import csv from 'csvtojson'
 import {
     Bulkstageupload,
     BulkDataupload,
-    BulkOperationRunMutation,
-    GenerateWebhook,
-    ProductGenerateWebhook
-} from '../api/api.server.js'
+    BulkOperationRunMutation} from '../api/api.server.js'
 
-import csvtojson from 'csvtojson'
+// import csvtojson from 'csvtojson'
 
-const cspload = './upload/csv'
 export const loader = async () => {
     return null
 }
@@ -25,37 +20,27 @@ export const action = async ({ request }) => {
 
     let filedata = await request.formData()
     let filess = filedata.get('csvFile')
-    console.log('files', filess)
-    console.log('size', filess.size)
+    console.log('filess',filess?.name)
     let ext = filess.name.split('.').pop();
-    if (filess.size > 1000000 || ext !== 'csv') {
+    if (filess.size > 1000000 || ext !== 'csv' || !filess.name) {
         //shuold not be > 1 MB
-        console.log('errr ')
         return json({ error: `File requirement doesn't match... `, status: false })
     } else {
 
-        const csvFile = new FormData()
-        csvFile.append('csvfile', filess)
+        let result = await fetch('https://an7.ec7.ai/?module=API&method=SitesManager.addSite&siteName=ec7webpixels&urls[0]=https://ec-7-webpixels.myshopify.com&urls[1]=http://ec-7-webpixels.myshopify.com&ecommerce=1&excludeUnknownUrls=1&currency=USD&timezone=America/Los_Angeles&token_auth=0a1315f2ff8b60f385734da045446333')
+        result = await result.text()
+        console.log('res', result)
 
-        console.log('cs', csvFile)
-        let res = await fetch('http://localhost:5000/upload', { method: "post", body: csvFile })
-        res = await res.json()
-        console.log('res', res)
-        const filepath = path.join(cspload, res.filedata)
 
-        // Read Csv file and covert into json 
+        // Read csv file and convert into josnL file
+        let csvtext=await filess.text()
+        let jsonData=await csv().fromString(csvtext)
         const myObject = [];
-        if (res) {
-            console.log('sdh')
-            let jsonArray = await csvtojson().fromFile(filepath)
-            console.log('sdjkfsdgkhg', jsonArray)
-            const jsonData = jsonArray.map((data) => {
-                let obj = { input: data }
-                myObject.push(obj)
-            })
-        }
+        jsonData.map((data) => {
+            let obj = { input: data }
+            myObject.push(obj)
+        })
 
-        console.log('js', myObject)
         let jsonLdata = myObject.map(obj => JSON.stringify(obj)).join('\n')
 
         const JsonLfile = new FormData()
@@ -67,7 +52,7 @@ export const action = async ({ request }) => {
 
             // step 1 initiat bulk upload
             let api_1 = await Bulkstageupload()
-            console.log('step 1', api_1)
+            // console.log('step 1', api_1)
             if (api_1.data?.stagedUploadsCreate?.stagedTargets) {
                 let stageddata = api_1.data.stagedUploadsCreate.stagedTargets[0].parameters
                 stageddata.map((data) => {
@@ -83,8 +68,6 @@ export const action = async ({ request }) => {
 
                         let resp = await parseStringPromise(api_2.data)
                         let key = resp.PostResponse.Key[0]
-                        console.log('key', resp)
-                        console.log('key', key)
 
                         if (key) {
                             try {
@@ -93,11 +76,11 @@ export const action = async ({ request }) => {
                                 console.log('step3', step3)
 
                                 if (step3?.data?.bulkOperationRunMutation?.bulkOperation) {
-                                    console.log('bulk data',step3)
+                                    // console.log('bulk data',step3)
                                     return json({ data: step3, status: true })
                                     
                                 } else {
-                                    return json({ data: step3, status: false, error: step3.data.bulkOperationRunMutation.userErrors[0].message })
+                                    return json({ data: step3, status: false, error: "Invalid csv file formate or file" })
                                 }
                             } catch (error) {
                                 console.log('api_3 error', error)
@@ -130,9 +113,14 @@ export const action = async ({ request }) => {
 const BulkUpload = () => {
     const Loaderdata = useLoaderData()
     const action_data = useActionData()
-    const submit = useSubmit()
     const Navigate = useNavigate()
-    console.warn('loader data', Loaderdata)
+
+    const transition=useTransition()
+    const state=transition.state==="submitting"
+
+    // console.log("first",state)
+
+    // console.warn('loader data', Loaderdata)
 
     const [msg, setMsg] = useState(false)
     const [errmsg, seterrMsg] = useState(false)
@@ -142,11 +130,11 @@ const BulkUpload = () => {
     useEffect(() => {
         if (action_data) {
             console.warn('action data', action_data)
-            action_data.status ? (setMsg(true), setLoader(false), setTimeout(() => { Navigate('/app') }, 3500)) : (seterrMsg(true), setLoader(false))
+            action_data.status ? (setMsg(true), setLoader(false), setTimeout(() => { Navigate('/app') }, 2500)) : (seterrMsg(true), setLoader(false))
         }
     }, [action_data])
 
-    console.warn('action data', action_data)
+    // console.warn('action data', action_data)
 
     return (
         <Page title='Bulk Upload'>
@@ -160,10 +148,13 @@ const BulkUpload = () => {
                          
                         </div><br />
                         {/* <p>upload ".csv " file only</p> */}
-                        <Button submit primarySuccess onClick={() => setLoader(true)}>
-                            {loader ? <Spinner size='small' /> : "Upload"}
+                        <Button submit primarySuccess onClick={() => setLoader(true)} loading={loader}>
+                            {/* {loader ? <Spinner size='small' /> : "Upload"} */}
+                            Upload
                         </Button>
-                    </Form>
+                    </Form>                    
+                    { state && <p> Action state </p> }
+
                     <br />                    
                     {errmsg ? <p style={{ color: "red" }}>{action_data.error}</p> : null}
                 </Card>
@@ -177,115 +168,3 @@ const BulkUpload = () => {
 
 export default BulkUpload
 
-// return json({status:true})
-        // let file = fs.readFileSync(path.join(jspath, 'myjson.jsonl'))
-        // console.log('ff', file)
-        // const a=fs.createReadStream(jsonfilePath)
-        // console.log('xjh',a)
-
-
-
-
-// let asd=fs.createReadStream(jsonfilePath)
-        // console.log('adfsd',fs.ReadStr)
-        // JsonLfile.append('file',fs.createReadStream(jsonlFileName))
-
-
-
-// let cb_url = await ngrok.connect(3000)
-                                    // console.log('cb ur ', cb_url)
-                                    // try {
-                                    //     //  step 4 webHook                                   
-                                    //     let result = await ProductGenerateWebhook(cb_url)
-                                    //     console.log('webhook ', result)
-                                    //     return json({ data: result, status: true })
-
-                                    // } catch (error) {
-                                    //     console.log('webhook error', error)
-                                    //     return json({ data: 'something went wrong', status: false, error: error })
-                                    // }
-
-// fs.createReadStream(filess)
-//     .pipe(csv())
-//     .on('data', (row) => {
-//         const jsonObject = {
-//             ...row,
-//         }
-//         jsonLdata.push(JSON.stringify({ "input": jsonObject }))
-//     })
-//     .on('end', () => {
-//         fs.writeFileSync(jsonfilePath, jsonLdata.join('\n'))
-//         console.log('jsonL file.. created')
-//     })
-
-
-// let filee=new FormData()
-// filee.append('file',filedata)
-
-
-// console.log('csv filees',typeof(filee))
-
-
-
-
-
-
-// uploadMiddleware.single('file')(request, null, async (err) => {
-//     if (err) {
-//         return json({ error: 'File upload failed' });
-//     }
-
-//     if (!request.file) {
-//         return json({ error: 'No file uploaded' });
-//     }
-
-//     // Access the uploaded file via request.file
-//     const file = request.file;
-
-//     // Now you can process the uploaded file as needed
-//     console.log('Uploaded file:', file.originalname);
-
-//     return json({ message: 'File uploaded successfully' });
-// });
-// console.log('csv file', typeof(csvfile))
-
-// const result = []
-// const bufStream = new BufferStream(csvfile)
-
-// bufStream.pipe(csv())
-//     .on('data', (data) => result.push(data))
-//     .on('end', (result) => {
-//         console.log(JSON.stringify(result))
-//     })
-
-// fs.readFileSync()
-
-
-
-// const bodydata = await request.formData()
-// console.log('request',filedata)
-// console.log('body data',bodydata)
-// let csFile=new  FormData()
-// csFile.append('filee',bodydata.get('file'))
-// console.log('files',fileInput)
-
-
-// if (fileInput) {
-//     const files = Array.isArray(fileInput) ? fileInput : [fileInput];
-//     console.log('testt')
-//     for (const file of files) {
-//         const fileBuffer = await file.arrayBuffer();
-//         console.log('first data', fileBuffer)
-//         // You can now process or save the file data as needed
-//         // For example, you can save it to the server or perform other operations.
-//     }
-// }
-
-// const filed = fs.readFileSync(csFile.get('filee'), 'utf8');
-// papaparse.parse(filed, {
-//     header: true,
-//     dynamicTyping: true,
-//     complete: function (results) {
-//         console.log(results.data);
-//     }
-// })

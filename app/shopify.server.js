@@ -5,21 +5,19 @@ import {
   shopifyApp,
   LATEST_API_VERSION,
 } from "@shopify/shopify-app-remix/server";
-import { PrismaSessionStorage } from "@shopify/shopify-app-session-storage-prisma";
-import {MongoDBSessionStorage} from '@shopify/shopify-app-session-storage-mongodb'
+import { MongoDBSessionStorage } from '@shopify/shopify-app-session-storage-mongodb'
 import { restResources } from "@shopify/shopify-api/rest/admin/2023-07";
-// import mongodbs from "./db.server";
 
-console.log('tests',process.env.SHOPIFY_APP_URL)
+// console.log('createToken', process.env.SHOPIFY_APP_URL)
 
 const shopify = shopifyApp({
   apiKey: process.env.SHOPIFY_API_KEY,
-  apiSecretKey: process.env.SHOPIFY_API_SECRET || "" ,
+  apiSecretKey: process.env.SHOPIFY_API_SECRET || "",
   apiVersion: LATEST_API_VERSION,
   scopes: process.env.SCOPES?.split(","),
   appUrl: process.env.SHOPIFY_APP_URL || "",
   authPathPrefix: "/auth",
-  sessionStorage: new  MongoDBSessionStorage('mongodb://127.0.0.1:27017/','bulkApp'),
+  sessionStorage: new MongoDBSessionStorage('mongodb://127.0.0.1:27017/', 'bulkApp'),
   distribution: AppDistribution.AppStore,
   restResources,
   webhooks: {
@@ -27,7 +25,7 @@ const shopify = shopifyApp({
       deliveryMethod: DeliveryMethod.Http,
       callbackUrl: "/webhooks",
     },
-    PRODUCTS_CREATE: {
+    SHOP_UPDATE: {
       deliveryMethod: DeliveryMethod.Http,
       callbackUrl: "/webhooks",
     },
@@ -35,11 +33,24 @@ const shopify = shopifyApp({
       deliveryMethod: DeliveryMethod.Http,
       callbackUrl: "/webhooks",
     },
-    
+    PRODUCTS_CREATE: {
+      deliveryMethod: DeliveryMethod.Http,
+      callbackUrl: "/webhooks",
+    },
+    PRODUCTS_DELETE: {
+      deliveryMethod: DeliveryMethod.Http,
+      callbackUrl: "/webhooks",
+    }
+
+
   },
   hooks: {
-    afterAuth: async ({ session }) => {
-      console.log("hello");
+    afterAuth: async ({ session,...rest }) => {
+      console.log("rest?",rest);   
+
+      // const { admin } = await shopify.authenticate.admin({ session });
+      // console.log("Access Token:..",);
+
       shopify.registerWebhooks({ session });
       //code
 
@@ -54,7 +65,9 @@ const shopify = shopifyApp({
 });
 
 
-// console.log('shopify...',shopify)
+// let admin=await shopify.authenticate.admin()
+// console.log("testt", shopify)
+// 
 
 export default shopify;
 export const apiVersion = LATEST_API_VERSION;

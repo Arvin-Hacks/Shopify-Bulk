@@ -1,21 +1,17 @@
 // import { CurrentBulkOperation } from '../api/api.js'
 // const CurrentBulkOperation1 = require('../api/api2')
-const { CurrentBulkOperation1, GetBulkResponse } = require('../api/api2')
 // import { CurrentBulkOperation1 } from '../api/api2'
 const express = require('express');
 const multer = require('multer');
-const path = require("path")
 const cors = require('cors')
 let uplaodpath = '../upload/csv'
 // const { createRequestHandler } = require('@remix-run/express');
 const app = express()
 // const { BulkUploadss } = require('./db.server')
-const { Product } = require('./db.server')
+const { Product ,Bulkimport } = require('./db.server')
 
 
 // const v=require('../upload/csv')
-const cspload = '../upload/csv'
-const jsonupload = '../upload/jsonL'
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, uplaodpath); // Set the destination folder
@@ -60,7 +56,7 @@ app.post('/upload', upload.single('csvfile'), (req, res) => {
 // app.get('/test',async(req,resp)=>{
 //   resp.send('test data')
 // })
-app.post('/', async (req, resp) => {
+app.post('/', async (req) => {
   console.log('dtdt', req.body)
   // let data = new BulkUploadss(req.body)
 
@@ -78,7 +74,7 @@ app.post('/', async (req, resp) => {
 
 app.get('/tests', async (req, res) => {
 
-  let data = new BulkUploadss({ admin_graphql_api_id: 'sdgha123' })
+  let data = new Bulkimport({ admin_graphql_api_id: 'sdgha123' })
   let result = await data.save()
 
   console.log('result', result)
@@ -87,7 +83,7 @@ app.get('/tests', async (req, res) => {
 
 app.post('/bulkdata', async (req, res) => {
   console.log('bulkdata response', req.body)
-  let data = new BulkUploadss(req.body)
+  let data = new Bulkimport(req.body)
 
   let result = await data.save()
 
