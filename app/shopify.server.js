@@ -46,10 +46,10 @@ const shopify = shopifyApp({
   },
   hooks: {
     afterAuth: async ({ session,...rest }) => {
-      console.log("rest?",rest);   
+      // console.log("rest?",rest);   
 
-      // const { admin } = await shopify.authenticate.admin({ session });
-      // console.log("Access Token:..",);
+      const { admin } = await shopify.authenticate.admin({ session });
+      console.log("Access Token:..",);
 
       shopify.registerWebhooks({ session });
       //code
